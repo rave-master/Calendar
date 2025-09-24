@@ -56,7 +56,22 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">TSD Calendar of Activities </h1>
-            <p class="text-gray-600">Track and view your scheduled activities</p>
+            <p class="text-gray-600">Track and view scheduled activities</p>
+            
+            <!-- Fill Me Up Button -->
+            <div class="mt-6">
+                <button id="fillMeUpBtn" class="fill-me-up-btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Fill Me Up
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -99,7 +114,7 @@
 
             <!-- Legend -->
             <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Section Legend</Legend></h3>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Activity Types</h3>
                 <div id="legend" class="flex flex-wrap gap-4"></div>
             </div>
         </div>
@@ -387,8 +402,15 @@
             renderCalendar();
         });
 
+        // Fill Me Up Button functionality
+        document.getElementById('fillMeUpBtn').addEventListener('click', () => {
+            // Replace this URL with your actual Google Form URL
+            const googleFormUrl = 'https://forms.gle/your-google-form-id';
+            window.open(googleFormUrl, '_blank', 'noopener,noreferrer');
+        });
+
         // Initialize
         loadActivities();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9840730f07ed0962',t:'MTc1ODY5NzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98408b21d310fed0',t:'MTc1ODY5ODY4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
