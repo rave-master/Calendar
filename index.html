@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activities Calendar Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 1px;
+        }
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hover-modal {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            z-index: 1000;
+            max-width: 300px;
+            border: 1px solid #e5e7eb;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        .hover-modal.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Activities Calendar</h1>
+            <p class="text-gray-600">Track and view your scheduled activities</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex justify-center items-center py-20">
+            <div class="loading-spinner"></div>
+            <span class="ml-3 text-gray-600">Loading activities...</span>
+        </div>
+
+        <!-- Calendar Navigation -->
+        <div id="calendar-container" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="prevMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        ← Previous
+                    </button>
+                    <h2 id="currentMonth" class="text-2xl font-semibold text-gray-800"></h2>
+                    <button id="nextMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        Next →
+                    </button>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    <div class="text-center font-semibold text-gray-600 py-2">Sun</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Mon</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Tue</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Wed</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Thu</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Fri</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Sat</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
+            </div>
+
+            <!-- Activity Details -->
+            <div id="activity-details" class="bg-white rounded-xl shadow-lg p-6 hidden">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Activities for <span id="selected-date"></span></h3>
+                <div id="activities-list"></div>
+            </div>
+
+            <!-- Legend -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Activity Types</h3>
+                <div id="legend" class="flex flex-wrap gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Hover Modal -->
+        <div id="hover-modal" class="hover-modal">
+            <div id="hover-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let activities = [];
+        let currentDate = new Date();
+        let activityTypes = new Map();
+        
+        const colors = [
+            '#ef4444', '#f97316', '#eab308', '#22c55e', 
+            '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'
+        ];
+
+        // Fetch and parse CSV data
+        async function loadActivities() {
+            try {
+                const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vTGUN_LWlXql9zJP56x_RCuiiCvRlC484gdR0LCE6VPsifLLNxA9vMObLX263wVYdsw7RAMs84vhpn3/pub?output=csv');
+                const csvText = await response.text();
+                
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                activities = [];
+                let colorIndex = 0;
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const values = parseCSVLine(lines[i]);
+                        const activity = {};
+                        
+                        headers.forEach((header, index) => {
+                            activity[header] = values[index] || '';
+                        });
+                        
+                        // Parse date using the Date column
+                        if (activity.Date) {
+                            activity.parsedDate = parseDate(activity.Date);
+                            if (activity.parsedDate) {
+                                // Assign specific colors to sections
+                                const section = activity.Section || 'Other';
+                                if (!activityTypes.has(section)) {
+                                    // Assign specific colors for each section
+                                    const sectionColors = {
+                                        'MES': '#ff161f',    // Red
+                                        'TSD': '#ffd90b',    // Yellow
+                                        'CDS': '#1d741b',    // Green
+                                        'RPS': '#1800ad',    // Blue
+                                        'Other': '#6b7280'   // Gray
+                                    };
+                                    activityTypes.set(section, sectionColors[section] || colors[colorIndex % colors.length]);
+                                    colorIndex++;
+                                }
+                                activity.color = activityTypes.get(section);
+                                activities.push(activity);
+                            }
+                        }
+                    }
+                }
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('calendar-container').classList.remove('hidden');
+                renderCalendar();
+                renderLegend();
+                
+            } catch (error) {
+                console.error('Error loading activities:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<div class="text-red-600">Error loading activities. Please check the CSV URL.</div>';
+            }
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function findDateField(activity) {
+            const dateFields = ['Date', 'date', 'Start Date', 'Event Date', 'When', 'Time'];
+            for (const field of dateFields) {
+                if (activity[field]) return field;
+            }
+            return Object.keys(activity)[0]; // Fallback to first field
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Try various date formats
+            const formats = [
+                /(\d{1,2})\/(\d{1,2})\/(\d{4})/,  // MM/DD/YYYY
+                /(\d{4})-(\d{1,2})-(\d{1,2})/,   // YYYY-MM-DD
+                /(\d{1,2})-(\d{1,2})-(\d{4})/    // DD-MM-YYYY
+            ];
+            
+            for (const format of formats) {
+                const match = dateStr.match(format);
+                if (match) {
+                    if (format === formats[1]) { // YYYY-MM-DD
+                        return new Date(match[1], match[2] - 1, match[3]);
+                    } else { // MM/DD/YYYY or DD-MM-YYYY
+                        return new Date(match[3], match[1] - 1, match[2]);
+                    }
+                }
+            }
+            
+            // Fallback to Date constructor
+            const parsed = new Date(dateStr);
+            return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 42; i++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const dayActivities = activities.filter(activity => 
+                    activity.parsedDate && 
+                    activity.parsedDate.toDateString() === cellDate.toDateString()
+                );
+                
+                const isCurrentMonth = cellDate.getMonth() === month;
+                const isToday = cellDate.toDateString() === new Date().toDateString();
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = `calendar-day p-3 min-h-[80px] border rounded-lg cursor-pointer ${
+                    isCurrentMonth ? 'bg-white hover:bg-blue-50' : 'bg-gray-100 text-gray-400'
+                } ${isToday ? 'ring-2 ring-blue-500' : ''}`;
+                
+                dayElement.innerHTML = `
+                    <div class="font-semibold mb-1">${cellDate.getDate()}</div>
+                    <div class="flex flex-wrap">
+                        ${dayActivities.map(activity => 
+                            `<div class="activity-dot" style="background-color: ${activity.color}" title="${activity.Section}: ${activity.Activity || 'Activity'}"></div>`
+                        ).join('')}
+                    </div>
+                `;
+                
+                dayElement.addEventListener('click', () => showActivities(cellDate, dayActivities));
+                
+                // Add hover functionality
+                dayElement.addEventListener('mouseenter', (e) => showHoverModal(e, cellDate, dayActivities));
+                dayElement.addEventListener('mouseleave', hideHoverModal);
+                
+                grid.appendChild(dayElement);
+            }
+        }
+
+        function showActivities(date, dayActivities) {
+            const detailsDiv = document.getElementById('activity-details');
+            const selectedDateSpan = document.getElementById('selected-date');
+            const activitiesList = document.getElementById('activities-list');
+            
+            selectedDateSpan.textContent = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            if (dayActivities.length === 0) {
+                activitiesList.innerHTML = '<p class="text-gray-500">No activities scheduled for this day.</p>';
+            } else {
+                activitiesList.innerHTML = dayActivities.map(activity => `
+                    <div class="border-l-4 pl-4 py-3 mb-3" style="border-color: ${activity.color}">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full text-white" style="background-color: ${activity.color}">
+                                ${activity.Section || 'Other'}
+                            </span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">${activity.Activity || 'Activity'}</h4>
+                        ${activity.Description ? `<p class="text-gray-600 mt-1">${activity.Description}</p>` : ''}
+                        ${activity.Time ? `<p class="text-sm text-gray-500 mt-1">⏰ ${activity.Time}</p>` : ''}
+                        ${activity.Location ? `<p class="text-sm text-gray-500 mt-1">📍 ${activity.Location}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            detailsDiv.classList.remove('hidden');
+            detailsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showHoverModal(event, date, dayActivities) {
+            const modal = document.getElementById('hover-modal');
+            const content = document.getElementById('hover-content');
+            
+            if (dayActivities.length === 0) {
+                content.innerHTML = `
+                    <div class="text-sm text-gray-600">
+                        <div class="font-semibold mb-1">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                        <div>No activities</div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-sm">
+                        <div class="font-semibold text-gray-800 mb-2">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                        ${dayActivities.slice(0, 3).map(activity => `
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="w-2 h-2 rounded-full" style="background-color: ${activity.color}"></div>
+                                <span class="text-xs font-medium text-white px-1 py-0.5 rounded" style="background-color: ${activity.color}">
+                                    ${activity.Section}
+                                </span>
+                                <span class="text-gray-700 text-xs">${activity.Activity}</span>
+                            </div>
+                        `).join('')}
+                        ${dayActivities.length > 3 ? `<div class="text-xs text-gray-500 mt-1">+${dayActivities.length - 3} more...</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Position the modal
+            const rect = event.target.getBoundingClientRect();
+            modal.style.left = `${rect.left + rect.width / 2}px`;
+            modal.style.top = `${rect.top - 10}px`;
+            modal.style.transform = 'translateX(-50%) translateY(-100%)';
+            
+            // Show modal
+            modal.classList.add('show');
+        }
+
+        function hideHoverModal() {
+            const modal = document.getElementById('hover-modal');
+            modal.classList.remove('show');
+        }
+
+        function renderLegend() {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = '';
+            
+            activityTypes.forEach((color, type) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'flex items-center';
+                legendItem.innerHTML = `
+                    <div class="w-4 h-4 rounded-full mr-2" style="background-color: ${color}"></div>
+                    <span class="text-sm text-gray-700">${type}</span>
+                `;
+                legend.appendChild(legendItem);
+            });
+        }
+
+        // Navigation
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Initialize
+        loadActivities();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9840730f07ed0962',t:'MTc1ODY5NzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
