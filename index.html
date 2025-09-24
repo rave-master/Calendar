@@ -52,7 +52,7 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="relative h-screen flex items-center justify-center bg-[url('de.jpg')] bg-cover bg-center">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="text-center mb-8">
@@ -83,7 +83,7 @@
 
         <!-- Calendar Navigation -->
         <div id="calendar-container" class="hidden">
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="bg-white rounded-xl shadow-2xl p-6 mb-6">
                 <div class="flex justify-between items-center mb-6">
                     <button id="prevMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                         ← Previous
@@ -114,7 +114,7 @@
             </div>
 
             <!-- Legend -->
-            <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+            <div class="bg-white rounded-xl shadow-2xl p-6 mt-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Section Legend</h3>
                 <div id="legend" class="flex flex-wrap gap-4"></div>
             </div>
