@@ -3,42 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TSD Calendar Dashboard</title>
+    <title>Calendar of Activities Dashboard</title>
     <link rel="icon" href="https://ia601205.us.archive.org/12/items/icon_20250717/icon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Inter', sans-serif; }
         .activity-dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             display: inline-block;
             margin: 1px;
         }
-        @media (min-width: 768px) {
-            .activity-dot {
-                width: 8px;
-                height: 8px;
-            }
-        }
-        .calendar-day {
-            transition: all 0.2s ease;
-            min-height: 60px;
-        }
         .calendar-day:hover {
-            transform: translateY(-1px);
-        }
-        @media (min-width: 768px) {
-            .calendar-day {
-                min-height: 80px;
-            }
-            .calendar-day:hover {
-                transform: translateY(-2px);
-            }
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
         }
         .loading-spinner {
             border: 3px solid #f3f4f6;
@@ -59,59 +39,35 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             padding: 12px;
             z-index: 1000;
-            max-width: 280px;
+            max-width: 300px;
             border: 1px solid #e5e7eb;
             opacity: 0;
             transform: translateY(-10px);
             transition: all 0.2s ease;
             pointer-events: none;
         }
-        @media (min-width: 768px) {
-            .hover-modal {
-                max-width: 300px;
-            }
-        }
         .hover-modal.show {
             opacity: 1;
             transform: translateY(0);
-        }
-        /* Mobile touch improvements */
-        @media (max-width: 767px) {
-            .calendar-day {
-                -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
-                tap-highlight-color: rgba(59, 130, 246, 0.1);
-            }
-            .hover-modal {
-                display: none; /* Hide hover modals on mobile */
-            }
-        }
-        /* Ensure proper spacing on mobile */
-        .mobile-container {
-            padding: 1rem;
-        }
-        @media (min-width: 640px) {
-            .mobile-container {
-                padding: 2rem;
-            }
         }
     </style>
 </head>
 <body class="relative min-h-screen bg-[url('de.jpg')] bg-cover bg-center">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
-        <div class="text-center mb-6 md:mb-8">
-            <h1 class="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Activities Calendar</h1>
-            <p class="text-sm md:text-base text-gray-600">Track and view your scheduled activities</p>
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">TSD Calendar of Activities </h1>
+            <p class="text-gray-600">Track and view scheduled activities</p>
             
             <!-- Fill Me Up Button -->
-            <div class="mt-4 md:mt-6">
-                <button id="fillMeUpBtn" class="fill-me-up-btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base">
+            <div class="mt-6">
+                <button id="fillMeUpBtn" class="fill-me-up-btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
                     <span class="flex items-center gap-2">
-                        <svg class="w-4 h-4 md:w-5 md:h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                         Fill Me Up
-                        <svg class="w-4 h-4 md:w-5 md:h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                     </span>
@@ -127,40 +83,40 @@
 
         <!-- Calendar Navigation -->
         <div id="calendar-container" class="hidden">
-            <div class="bg-white rounded-xl shadow-lg p-3 md:p-6 mb-4 md:mb-6">
-                <div class="flex justify-between items-center mb-4 md:mb-6">
-                    <button id="prevMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 md:px-4 md:py-2 rounded-lg transition-colors text-sm md:text-base">
-                        ← Prev
+            <div class="bg-white rounded-xl shadow-2xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="prevMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        ← Previous
                     </button>
-                    <h2 id="currentMonth" class="text-lg md:text-2xl font-semibold text-gray-800 text-center flex-1 mx-2"></h2>
-                    <button id="nextMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 md:px-4 md:py-2 rounded-lg transition-colors text-sm md:text-base">
+                    <h2 id="currentMonth" class="text-2xl font-semibold text-gray-800"></h2>
+                    <button id="nextMonth" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                         Next →
                     </button>
                 </div>
 
                 <!-- Calendar Grid -->
-                <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2 md:mb-4">
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Sun</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Mon</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Tue</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Wed</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Thu</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Fri</div>
-                    <div class="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">Sat</div>
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    <div class="text-center font-semibold text-gray-600 py-2">Sun</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Mon</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Tue</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Wed</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Thu</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Fri</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">Sat</div>
                 </div>
-                <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
             </div>
 
             <!-- Activity Details -->
-            <div id="activity-details" class="bg-white rounded-xl shadow-lg p-3 md:p-6 hidden">
-                <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">Activities for <span id="selected-date"></span></h3>
+            <div id="activity-details" class="bg-white rounded-xl shadow-lg p-6 hidden">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Activities for <span id="selected-date"></span></h3>
                 <div id="activities-list"></div>
             </div>
 
             <!-- Legend -->
-            <div class="bg-white rounded-xl shadow-lg p-3 md:p-6 mt-4 md:mt-6">
-                <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">Activity Types</h3>
-                <div id="legend" class="flex flex-wrap gap-2 md:gap-4"></div>
+            <div class="bg-white rounded-xl shadow-2xl p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Section Legend</h3>
+                <div id="legend" class="flex flex-wrap gap-4"></div>
             </div>
         </div>
 
@@ -320,12 +276,12 @@
                 const isToday = cellDate.toDateString() === new Date().toDateString();
                 
                 const dayElement = document.createElement('div');
-                dayElement.className = `calendar-day p-2 md:p-3 border rounded-lg cursor-pointer ${
+                dayElement.className = `calendar-day p-3 min-h-[80px] border rounded-lg cursor-pointer ${
                     isCurrentMonth ? 'bg-white hover:bg-blue-50' : 'bg-gray-100 text-gray-400'
                 } ${isToday ? 'ring-2 ring-blue-500' : ''}`;
                 
                 dayElement.innerHTML = `
-                    <div class="font-semibold mb-1 text-sm md:text-base">${cellDate.getDate()}</div>
+                    <div class="font-semibold mb-1">${cellDate.getDate()}</div>
                     <div class="flex flex-wrap">
                         ${dayActivities.map(activity => 
                             `<div class="activity-dot" style="background-color: ${activity.color}" title="${activity.Section}: ${activity.Activity || 'Activity'}"></div>`
@@ -359,16 +315,16 @@
                 activitiesList.innerHTML = '<p class="text-gray-500">No activities scheduled for this day.</p>';
             } else {
                 activitiesList.innerHTML = dayActivities.map(activity => `
-                    <div class="border-l-4 pl-3 md:pl-4 py-2 md:py-3 mb-2 md:mb-3" style="border-color: ${activity.color}">
+                    <div class="border-l-4 pl-4 py-3 mb-3" style="border-color: ${activity.color}">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full text-white" style="background-color: ${activity.color}">
                                 ${activity.Section || 'Other'}
                             </span>
                         </div>
-                        <h4 class="font-semibold text-gray-800 text-sm md:text-base">${activity.Activity || 'Activity'}</h4>
-                        ${activity.Description ? `<p class="text-gray-600 mt-1 text-sm">${activity.Description}</p>` : ''}
-                        ${activity.Time ? `<p class="text-xs md:text-sm text-gray-500 mt-1">⏰ ${activity.Time}</p>` : ''}
-                        ${activity.Location ? `<p class="text-xs md:text-sm text-gray-500 mt-1">📍 ${activity.Location}</p>` : ''}
+                        <h4 class="font-semibold text-gray-800">${activity.Activity || 'Activity'}</h4>
+                        ${activity.Description ? `<p class="text-gray-600 mt-1">${activity.Description}</p>` : ''}
+                        ${activity.Time ? `<p class="text-sm text-gray-500 mt-1">⏰ ${activity.Time}</p>` : ''}
+                        ${activity.Location ? `<p class="text-sm text-gray-500 mt-1">📍 ${activity.Location}</p>` : ''}
                     </div>
                 `).join('');
             }
@@ -406,76 +362,11 @@
                 `;
             }
             
-            // Position the modal beside the date box with better viewport awareness
+            // Position the modal
             const rect = event.target.getBoundingClientRect();
-            const modalWidth = 300; // max-width from CSS
-            const modalHeight = 120; // estimated modal height
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const spaceOnRight = windowWidth - rect.right;
-            const spaceOnLeft = rect.left;
-            const spaceBelow = windowHeight - rect.bottom;
-            const spaceAbove = rect.top;
-            
-            let leftPosition, topPosition, transform;
-            
-            // First, try to position horizontally (right or left)
-            if (spaceOnRight >= modalWidth + 10) {
-                // Show on the right side
-                leftPosition = rect.right + 10;
-                
-                // Check if we need to adjust vertically
-                if (spaceBelow >= modalHeight / 2 && spaceAbove >= modalHeight / 2) {
-                    // Center vertically next to the date box
-                    topPosition = rect.top + rect.height / 2;
-                    transform = 'translateY(-50%)';
-                } else if (spaceBelow < modalHeight / 2) {
-                    // Position above the date box if not enough space below
-                    topPosition = rect.top - 10;
-                    transform = 'translateY(-100%)';
-                } else {
-                    // Position below the date box
-                    topPosition = rect.bottom + 10;
-                    transform = 'translateY(0)';
-                }
-                
-            } else if (spaceOnLeft >= modalWidth + 10) {
-                // Show on the left side
-                leftPosition = rect.left - modalWidth - 10;
-                
-                // Check if we need to adjust vertically
-                if (spaceBelow >= modalHeight / 2 && spaceAbove >= modalHeight / 2) {
-                    // Center vertically next to the date box
-                    topPosition = rect.top + rect.height / 2;
-                    transform = 'translateY(-50%)';
-                } else if (spaceBelow < modalHeight / 2) {
-                    // Position above the date box if not enough space below
-                    topPosition = rect.top - 10;
-                    transform = 'translateY(-100%)';
-                } else {
-                    // Position below the date box
-                    topPosition = rect.bottom + 10;
-                    transform = 'translateY(0)';
-                }
-                
-            } else {
-                // Not enough horizontal space, position above or below
-                leftPosition = rect.left + rect.width / 2;
-                
-                if (spaceAbove >= modalHeight + 10) {
-                    // Position above
-                    topPosition = rect.top - 10;
-                    transform = 'translateX(-50%) translateY(-100%)';
-                } else {
-                    // Position below
-                    topPosition = rect.bottom + 10;
-                    transform = 'translateX(-50%) translateY(0)';
-                }
-            }
-            
-            modal.style.left = `${leftPosition}px`;
-            modal.style.top = `${topPosition}px`;
-            modal.style.transform = transform;
+            modal.style.left = `${rect.left + rect.width / 2}px`;
+            modal.style.top = `${rect.top - 10}px`;
+            modal.style.transform = 'translateX(-50%) translateY(-100%)';
             
             // Show modal
             modal.classList.add('show');
@@ -494,8 +385,8 @@
                 const legendItem = document.createElement('div');
                 legendItem.className = 'flex items-center';
                 legendItem.innerHTML = `
-                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full mr-2" style="background-color: ${color}"></div>
-                    <span class="text-xs md:text-sm text-gray-700">${type}</span>
+                    <div class="w-4 h-4 rounded-full mr-2" style="background-color: ${color}"></div>
+                    <span class="text-sm text-gray-700">${type}</span>
                 `;
                 legend.appendChild(legendItem);
             });
@@ -515,16 +406,17 @@
         // Fill Me Up Button functionality
         document.getElementById('fillMeUpBtn').addEventListener('click', () => {
             // Replace this URL with your actual Google Form URL
-            const googleFormUrl = 'https://forms.gle/your-google-form-id';
+            const googleFormUrl = 'https://forms.gle/t2NH9UxRE8aSwa5j9';
             window.open(googleFormUrl, '_blank', 'noopener,noreferrer');
         });
 
         // Initialize
         loadActivities();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9872345b02ebfc92',t:'MTc1OTIxOTQxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
-    </script>
-    
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98408b21d310fed0',t:'MTc1ODY5ODY4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+
+</script>
+
 <script>
   document.addEventListener("contextmenu", e => e.preventDefault());
   document.onkeydown = function(e) {
@@ -533,7 +425,6 @@
     }
   };
 </script>
-
 
 
 </body>
